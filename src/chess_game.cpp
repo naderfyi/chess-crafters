@@ -341,91 +341,90 @@ public:
         }
     }
 
-};
-
-bool executeMove(board& b, const Color& currentTurn, const string& from, const string& to) {
-    if (!b.isValidInput(from) || !b.isValidInput(to)) {
-        cout << "Invalid input format. Please use the format like 'A2 A3'." << endl;
-        return false;
-    }
-
-    int fromX = toupper(from[0]) - 'A';
-    int fromY = 8 - (from[1] - '0');
-    int toX = toupper(to[0]) - 'A';
-    int toY = 8 - (to[1] - '0');
-
-    piece* p = b.data[fromY][fromX];
-    if (p == nullptr) {
-        cout << "There's no piece at " << from << ". Please try again." << endl;
-        return false;
-    }
-
-    if (p->getColor() != currentTurn) {
-        cout << "The piece at " << from << " doesn't belong to you. Please try again." << endl;
-        return false;
-    }
-
-    vector<pair<string, string>> validMoves = b.findValidMovesForColor(currentTurn);
-    string moveFrom = b.toChessNotation(fromX, fromY);
-    string moveTo = b.toChessNotation(toX, toY);
-    auto it = find_if(validMoves.begin(), validMoves.end(), [&](const pair<string, string>& move) {
-        return move.first == moveFrom && move.second == moveTo;
-    });
-
-    if (it != validMoves.end()) {
-        piece* destinationPiece = b.data[toY][toX];
-        if (destinationPiece != nullptr) {
-            delete destinationPiece;
+    bool checkGameEnd(const Color& currentTurn) {
+        Color opponent = (currentTurn == Color::White) ? Color::Black : Color::White;
+        if (!kingExists(opponent)) {
+            cout << "\n\n❌ 🎮 Game over. " << (currentTurn == Color::White ? "White" : "Black") << " wins! 🎉\n\n" << endl;
+            return true;
         }
-        b.data[toY][toX] = p;
-        b.data[fromY][fromX] = nullptr;
-        cout << (currentTurn == Color::White ? "\nWhite" : "\nBlack") << " moved " << moveFrom << " to " << moveTo << "." << endl;
-        return true;
-    } else {
-        cout << "Invalid move for the selected piece. Please try again." << endl;
         return false;
     }
-}
+    
+    bool executeMove(const Color& currentTurn, const string& from, const string& to) {
+        if (!isValidInput(from) || !isValidInput(to)) {
+            cout << "Invalid input format. Please use the format like 'A2 A3'." << endl;
+            return false;
+        }
 
-void playerMove(board& b, const Color& playerColor, const string& playerName, int& roundCounter) {
-    cout << "\n\nTo quit, enter 'q'." << endl;
-    cout << "\n\n" << playerName << ", enter your move (e.g., A2 A3): ";
-    string from, to;
-    cin >> from;
-    if (from == "q") {
-        cout << "\n\n❌ 🎮 Game over. " << playerName << " quit the game. 👋" << endl;
-        cout << "\n🎉 AI wins! 🎉\n\n" << endl;
-        exit(0);
-    }
-    cin >> to;
-    if (!executeMove(b, playerColor, from, to)) {
-        roundCounter--;
-    }
-}
+        int fromX = toupper(from[0]) - 'A';
+        int fromY = 8 - (from[1] - '0');
+        int toX = toupper(to[0]) - 'A';
+        int toY = 8 - (to[1] - '0');
 
-void aiMove(board& b, const Color& aiColor, int& roundCounter) {
-    vector<pair<string, string>> validMoves = b.findValidMovesForColor(aiColor);
-    if (!validMoves.empty()) {
-        int moveIndex = rand() % validMoves.size();
-        auto selectedMove = validMoves[moveIndex];
-        if (!executeMove(b, aiColor, selectedMove.first, selectedMove.second)) {
+        piece* p = data[fromY][fromX];
+        if (p == nullptr) {
+            cout << "There's no piece at " << from << ". Please try again." << endl;
+            return false;
+        }
+
+        if (p->getColor() != currentTurn) {
+            cout << "The piece at " << from << " doesn't belong to you. Please try again." << endl;
+            return false;
+        }
+
+        vector<pair<string, string>> validMoves = findValidMovesForColor(currentTurn);
+        string moveFrom = toChessNotation(fromX, fromY);
+        string moveTo = toChessNotation(toX, toY);
+        auto it = find_if(validMoves.begin(), validMoves.end(), [&](const pair<string, string>& move) {
+            return move.first == moveFrom && move.second == moveTo;
+        });
+
+        if (it != validMoves.end()) {
+            piece* destinationPiece = data[toY][toX];
+            if (destinationPiece != nullptr) {
+                delete destinationPiece;
+            }
+            data[toY][toX] = p;
+            data[fromY][fromX] = nullptr;
+            cout << (currentTurn == Color::White ? "\nWhite" : "\nBlack") << " moved " << moveFrom << " to " << moveTo << "." << endl;
+            return true;
+        } else {
+            cout << "Invalid move for the selected piece. Please try again." << endl;
+            return false;
+        }
+    }
+
+    void playerMove(const Color& playerColor, const string& playerName, int& roundCounter) {
+        cout << "\n\nTo quit, enter 'q'." << endl;
+        cout << "\n\n" << playerName << ", enter your move (e.g., A2 A3): ";
+        string from, to;
+        cin >> from;
+        if (from == "q") {
+            cout << "\n\n❌ 🎮 Game over. " << playerName << " quit the game. 👋" << endl;
+            cout << "\n🎉 AI wins! 🎉\n\n" << endl;
+            exit(0);
+        }
+        cin >> to;
+        if (!executeMove(playerColor, from, to)) {
             roundCounter--;
         }
-    } else {
-        cout << "\nAI has no valid moves. Stalemate!" << endl;
-        cout << "\n🎉 It's a draw! 🎉\n\n" << endl;
-        exit(0);
     }
-}
 
-bool checkGameEnd(board& b, const Color& currentTurn) {
-    Color opponent = (currentTurn == Color::White) ? Color::Black : Color::White;
-    if (!b.kingExists(opponent)) {
-        cout << "\n\n❌ 🎮 Game over. " << (currentTurn == Color::White ? "White" : "Black") << " wins! 🎉\n\n" << endl;
-        return true;
+    void aiMove(const Color& aiColor, int& roundCounter) {
+        vector<pair<string, string>> validMoves = findValidMovesForColor(aiColor);
+        if (!validMoves.empty()) {
+            int moveIndex = rand() % validMoves.size();
+            auto selectedMove = validMoves[moveIndex];
+            if (!executeMove(aiColor, selectedMove.first, selectedMove.second)) {
+                roundCounter--;
+            }
+        } else {
+            cout << "\nAI has no valid moves. Stalemate!" << endl;
+            cout << "\n🎉 It's a draw! 🎉\n\n" << endl;
+            exit(0);
+        }
     }
-    return false;
-}
+};
 
 int main() {
     try {
@@ -442,14 +441,14 @@ int main() {
             Color currentTurn = (roundCounter % 2 == 0) ? playerColor : aiColor;
 
             if (currentTurn == playerColor) {
-                playerMove(b, playerColor, playerName, roundCounter);
+                b.playerMove(playerColor, playerName, roundCounter);
             } else {
-                aiMove(b, aiColor, roundCounter);
+                b.aiMove(aiColor, roundCounter);
             }
 
             b.print();
 
-            if (checkGameEnd(b, currentTurn)) {
+            if (b.checkGameEnd(currentTurn)) {
                 break;
             }
 
