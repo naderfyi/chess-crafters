@@ -35,8 +35,13 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 clean:
 	rm -rf $(BIN_DIR)/* $(OBJ_DIR)/*
 
-# Rule for running the program
-run: $(TARGET)
-	./$(TARGET)
-
 .PHONY: all clean run
+
+# Default make command
+all: build run
+
+build: $(TARGET)
+
+# Rule for running the program
+run: build
+	./$(TARGET)
